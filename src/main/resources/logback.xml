@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+<appender name="test" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>C:\App\logs\SberBotHuginLog.log</File>
+    <encoder>
+        <pattern>%d{MMdd@HH:mm:ss} %-5p [%t] |%file:%line| - %msg%n</pattern>
+        <charset>utf-8</charset>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>C:\App\logs\SberBotHugin._%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+    </rollingPolicy>
+</appender>
+<root level="info">
+    <appender-ref ref="test"/>
+</root>
+</Configuration>
