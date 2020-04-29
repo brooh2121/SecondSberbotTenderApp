@@ -111,7 +111,7 @@ public class currentTenderTest {
 
 
     @Test
-    void elemFromProsmotrOsago() throws InterruptedException {
+    void elemFromProsmotrOsago() {
         open("https://www.sberbank-ast.ru/purchaseList.aspx");
         String tenderNumber = "0372200054720000004";
         element(byId("searchInput")).setValue(tenderNumber).pressEnter();
@@ -134,10 +134,22 @@ public class currentTenderTest {
         }else {
             System.out.println("это не осаго");
         }
-
         WebDriverRunner.closeWindow();
         switchTo().window(0);
         System.out.println(WebDriverRunner.url());
     }
-    //0161100004020000022
+
+    @Test
+    void fillinDoc() throws InterruptedException{
+        open("https://www.sberbank-ast.ru/purchaseList.aspx");
+        String tenderNumber = "0338200006520000003";
+        element(byId("searchInput")).setValue(tenderNumber).pressEnter();
+        SelenideElement selenideElement = element(byId("resultTable"));
+        selenideElement.shouldBe(Condition.visible);
+        SelenideElement divonerow = selenideElement.find(byClassName("element-in-one-row"));
+        ElementsCollection els = divonerow.findAll(byCssSelector("input"));
+        System.out.println(els.get(0));
+        //els.get(0).click();
+        Thread.sleep(1000);
+    }
 }

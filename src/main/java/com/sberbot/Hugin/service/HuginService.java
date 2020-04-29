@@ -1,16 +1,21 @@
 package com.sberbot.Hugin.service;
 
 import com.codeborne.selenide.*;
+import com.sberbot.Hugin.dao.HuginDao;
 import com.sberbot.Hugin.model.AuctionModel;
 import org.openqa.selenium.ie.InternetExplorerDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.nio.channels.SeekableByteChannel;
+import java.time.LocalDateTime;
 
 import static com.codeborne.selenide.Selectors.*;
 import static com.codeborne.selenide.Selenide.*;
@@ -21,9 +26,12 @@ public class HuginService {
     private static final Logger logger = LoggerFactory.getLogger(HuginService.class.getSimpleName());
 
     @Autowired
+    HuginDao huginDao;
+
+    @Autowired
     Environment environment;
 
-    public boolean getLogin() throws InterruptedException {
+    public boolean getLogin() {
         File driverFile = new File(environment.getProperty("webdriver.path"));
         System.setProperty("webdriver.ie.driver",driverFile.getAbsolutePath());
         Configuration.browserCapabilities.setCapability("ie.forceCreateProcessApi",true);
@@ -40,18 +48,23 @@ public class HuginService {
         //Configuration.browserCapabilities.setCapability("acceptInsecureCerts",true);
         logger.info("Переходим на страницу");
         open("https://www.sberbank-ast.ru/purchaseList.aspx");
-        /*
+        WebDriverRunner.getWebDriver().manage().window().maximize();
+
         element(byId("ctl00_ctl00_loginctrl_anchSignOn")).click();
-        confirm();
+        //confirm();
         element(byId("mainContent_DDL1")).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
         element(byId("btnEnter")).click();
-        minimalizeTenderTable();
-        getTenderUrlCheck();
-        */
-        return true;
+        //minimalizeTenderTable();
+
+        if (getTenderUrlCheck()) {
+            return true;
+        } else return false;
+
+
+        //return true;
     }
 
-    /*
+
     private boolean getTenderUrlCheck () {
         String url = WebDriverRunner.url();
         String user = element(byCssSelector("#ctl00_ctl00_loginctrl_link")).text();
@@ -66,42 +79,153 @@ public class HuginService {
 
     }
 
-     */
 
-    public Boolean getCurrentTender(String tenderNumber) {
-        //String tenderNumber = "0725100000220000012";
-        AuctionModel auctionModelFromDb = new AuctionModel();
-        auctionModelFromDb.setAuctionNumber("0725100000220000012");
-        auctionModelFromDb.setOrgName("ФЕДЕРАЛЬНОЕ БЮДЖЕТНОЕ УЧРЕЖДЕНИЕ ЦЕНТР РЕАБИЛИТАЦИИ ФОНДА СОЦИАЛЬНОГО СТРАХОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ \"ТИНАКИ\"");
-        auctionModelFromDb.setTenderName("Поставка плёнки и клеёнки");
-        auctionModelFromDb.setPublicDate("24.04.2020 12:48");
-        auctionModelFromDb.setSum("149 723.76");
+    public AuctionModel getTenderFromDB () {
+        AuctionModel auctionModelFromDb = huginDao.getMinimalTender();
+        return auctionModelFromDb;
+    }
 
-        SelenideElement tableWithOneRow = seachOption(tenderNumber);
-        String tenderNumberFromSite = tableWithOneRow.find(byClassName("es-el-code-term")).text();
-        String orgName = tableWithOneRow.find(byClassName("es-el-org-name")).text();
-        String tenderName = tableWithOneRow.find(byClassName("es-el-name")).text();
-        String publicDate = tableWithOneRow.find(byCssSelector("span[content='leaf:PublicDate']")).text();
-        String tenderSum = tableWithOneRow.find(byClassName("es-el-amount")).text();
-        String tenderStatus = tableWithOneRow.find(byCssSelector("div.es-el-state-name.PurchStateName")).text();
+    public Boolean getCurrentTender() {
+        AuctionModel auctionModelFromDb = getTenderFromDB ();
+        //if(auctionModelFromDb != null) {
+            SelenideElement tableWithOneRow = seachOption(auctionModelFromDb.getAuctionNumber());
+            String tenderNumberFromSite = tableWithOneRow.find(byClassName("es-el-code-term")).text();
+            String orgName = tableWithOneRow.find(byClassName("es-el-org-name")).text();
+            String tenderName = tableWithOneRow.find(byClassName("es-el-name")).text();
+            String publicDate = tableWithOneRow.find(byCssSelector("span[content='leaf:PublicDate']")).text();
+            String tenderSum = tableWithOneRow.find(byClassName("es-el-amount")).text();
+            String tenderStatus = tableWithOneRow.find(byCssSelector("div.es-el-state-name.PurchStateName")).text();
 
-        AuctionModel auctionModelFromSite = new AuctionModel ();
-        auctionModelFromSite.setAuctionNumber(tenderNumberFromSite);
-        auctionModelFromSite.setOrgName(orgName);
-        auctionModelFromSite.setTenderName(tenderName);
-        auctionModelFromSite.setPublicDate(publicDate);
-        auctionModelFromSite.setSum(tenderSum);
-        auctionModelFromSite.setTenderStatus(tenderStatus);
+            AuctionModel auctionModelFromSite = new AuctionModel ();
+            auctionModelFromSite.setAuctionNumber(tenderNumberFromSite);
+            auctionModelFromSite.setOrgName(orgName);
+            auctionModelFromSite.setTenderName(tenderName);
+            auctionModelFromSite.setPublicDate(publicDate);
+            auctionModelFromSite.setSum(tenderSum);
+            auctionModelFromSite.setTenderStatus(tenderStatus);
 
-        Boolean tenderMatch = auctionModelFromDb.equals(auctionModelFromSite);
-        if (tenderMatch) {
-            if (checkTenderOptions(tableWithOneRow)) {
-                return true;
-            }else return false;
-        }else {
-         logger.info("Тендер из БД " + auctionModelFromDb.toString() + " не совпадает с тендером с сайта " + auctionModelFromSite);
-         return false;
+            Boolean tenderMatch = auctionModelFromDb.equals(auctionModelFromSite);
+
+            if (tenderMatch) {
+                if (checkTenderOptions(tableWithOneRow)) {
+                    logger.info("Тендер с номером " + auctionModelFromSite.getAuctionNumber() + " подходит для подачи документов");
+                    huginDao.setTenderStatusIfSuccess(auctionModelFromSite.getAuctionNumber());
+                    logger.info("Меняем статус тендера на значение: подходит для подачи документов");
+                    return true;
+                }else {
+                    logger.info("Тендер с номером " + auctionModelFromSite.getAuctionNumber() + " не подходит для подачи документов");
+                    huginDao.setTenderStatusIfFailure(auctionModelFromSite.getAuctionNumber());
+                    logger.info("Меняем статус тендера на значение: не подходит для подачи документов");
+                    WebDriverRunner.closeWindow();
+                    switchTo().window(0);
+                    return false;
+                }
+            }else {
+                logger.info("Тендер из БД " + auctionModelFromDb.toString() + " не совпадает с тендером с сайта " + auctionModelFromSite);
+                huginDao.setTenderStatusIfFailure(auctionModelFromSite.getAuctionNumber());
+                logger.info("Меняем статус тендера на значение: не подходит для подачи документов по причине не совпадения данных");
+                return false;
+            }
+        /*}else {
+            logger.info("В базе данных нет тендеров, которые нужно проверить");
+            return false;
+        }*/
+
+    }
+
+    public void filinDoc(String tenderNumber) {
+        SelenideElement selenideElement = element(byId("resultTable"));
+        selenideElement.shouldBe(Condition.visible);
+        SelenideElement divonerow = selenideElement.find(byClassName("element-in-one-row"));
+        ElementsCollection els = divonerow.findAll(byCssSelector("input"));
+        els.get(0).click();
+        logger.info("Осуществляем переход по ссылке " + WebDriverRunner.url());
+
+        try {
+            //скроллим до нажатия кнопки на выбор номера счета
+            executeJavaScript("window.scrollBy(0,400)", "");
+            SelenideElement button = element(byXpath("//table[@id='bxAccount']/tbody/tr/td[2]/input[2]"));
+            button.click();
+            switchTo().frame("spravIframe");
+            element(byXpath("//*[@id=\"XMLContainer\"]/table/tbody/tr[2]/td[1]/a/span")).shouldBe(Condition.visible).click();
+            switchTo().defaultContent();
+            String inputSchetNumber = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_phDocumentZone_nbtPurchaseRequest_bxAccount_account\"]")).getValue();
+
+            if(StringUtils.hasText(inputSchetNumber)) {
+                logger.info("Удалось выбрать номер счета");
+                huginDao.docSendJourInsert(tenderNumber,"Выбрали номер счета",true,null);
+            }
+
+            //согласие на поставку услуг
+            element(byXpath("//*[@id=\"XMLContainer\"]/div/table[5]/tbody/tr[2]/td[2]/input[2]")).click();
+            switchTo().frame("spravIframe");
+            element(byXpath("//*[@id=\"ctl00_phDataZone_btnOK\"]")).click();
+            switchTo().defaultContent();
+            String deliveryConsention = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_phDocumentZone_nbtPurchaseRequest_reqAgreementAnswer\"]")).getText();
+
+            if(StringUtils.hasText(deliveryConsention)) {
+                logger.info("Согласились на предоставление услуг");
+                huginDao.docSendJourInsert(tenderNumber,"Согласились на предоставление услуг", true, null);
+            }
+
+            //скроллим до кнопки формы согласия
+            executeJavaScript("window.scrollBy(0,400)", "");
+            element(byXpath("//*[@id=\"ctl00$ctl00$phWorkZone$phDocumentZone$nbtPurchaseRequest$reqDocsPart1tblDoc\"]/tbody/tr/td[2]/input[1]")).click();
+            switchTo().frame("spravIframe");
+            element(byXpath("//*[@id=\"ctl00_phDataZone_FileStoreContainer\"]/div[1]/a")).click();
+            switchTo().defaultContent();
+            String formConsensionDoc = element(byXpath("//*[@id=\"txbFileName\"]")).getText();
+
+            if (StringUtils.hasText(formConsensionDoc)) {
+                logger.info("Приложили документ согласия");
+                huginDao.docSendJourInsert(tenderNumber,"приложили документ на предоставление услуг", true, null);
+            }
+
+            //скроллим до кнопки подписать декларацию
+            executeJavaScript("window.scrollBy(0,1000)", "");
+            element(byXpath("//*[@id=\"tblrequireddocs22\"]/tbody/tr[4]/td[2]/input[2]")).click();
+            switchTo().frame("spravIframe");
+            executeJavaScript("window.scrollBy(0,700)", "");
+            element(byXpath("//*[@id=\"ctl00_phDataZone_btnOK\"]")).click();
+            switchTo().defaultContent();
+            String declarationConsent = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_phDocumentZone_nbtPurchaseRequest_reqDeclarationRequirementsAnswer\"]")).getText();
+
+            if(StringUtils.hasText(declarationConsent)) {
+                logger.info("подписали декларацию");
+                huginDao.docSendJourInsert(tenderNumber,"подписали декларацию", true, null);
+            }
+
+            //скроллим чтобы приложить документы 2 часть
+            executeJavaScript("window.scrollBy(0,400)", "");
+            element(byXpath("//*[@id=\"ctl00$ctl00$phWorkZone$phDocumentZone$nbtPurchaseRequest$FileAttach2tblDoc\"]/tbody/tr/td[2]/input[1]")).click();
+            switchTo().frame("spravIframe");
+            element(byXpath("//*[@id=\"ctl00_phDataZone_FileStoreContainer\"]/div[2]/a")).click();
+            switchTo().defaultContent();
+            String form2part = element(byXpath("//*[@id=\"txbFileName\"]/span")).getText();
+
+            if(StringUtils.hasText(form2part)) {
+                logger.info("приложили документы, вторую часть");
+                huginDao.docSendJourInsert(tenderNumber,"приложили вторую часть документов", true, null);
+            }
+
+            //Подачу самой заявки пока не делаем
+            //element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).click();
+            if (
+                    StringUtils.hasText(inputSchetNumber)
+                            & StringUtils.hasText(deliveryConsention)
+                            & StringUtils.hasText(formConsensionDoc)
+                            & StringUtils.hasText(declarationConsent)
+                            & StringUtils.hasText(form2part)) {
+                huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"пока что не отправляем");
+            }
+
+
+        }catch (Exception e) {
+            logger.error(e.getMessage());
         }
+
+        open("https://www.sberbank-ast.ru/purchaseList.aspx");
+
     }
 
     private boolean checkTenderOptions(SelenideElement selenideElement) {
@@ -109,12 +233,17 @@ public class HuginService {
         ElementsCollection els = divonerow.findAll(byCssSelector("input"));
         els.get(1).click();
         switchTo().window(1);
-        if(!WebDriverRunner.url().equals("https://www.sberbank-ast.ru/purchaseList.aspx")) {
-            SelenideElement el = element(byXpath("//*/tbody/tr[2]/td[2]"));
+        System.out.println(WebDriverRunner.url());
+        //if(!WebDriverRunner.url().equals("https://www.sberbank-ast.ru/purchaseList.aspx")) {
+            logger.info("Переходим к просмотру данных по тендеру");
+            SelenideElement el = element(byXpath("//*/tbody/tr[2]/td[2]")).waitUntil(Condition.visible,2000);
             if (String.valueOf(el).contains("44-ФЗ")) {
+                logger.info("Тендер прошел проверку по значению поля равному 44-ФЗ, переходим к проверке ОКПД");
                 String okpd = element(byCssSelector("span[content='leaf:code']")).text();
                 if(okpd.contains("65")) {
+                    logger.info("Тендер прошел проверку ОКПД в части первых двух символов, равных 65");
                     if (!okpd.contains("65.3.")||!okpd.contains("65.30")) {
+                        logger.info("Тендер не относится к 65.3. и 65.30, следовательно подходит для подачи документов");
                         System.out.println("Это осаго");
                         return true;
                     }else {
@@ -123,10 +252,17 @@ public class HuginService {
                     }
                 }else {
                     System.out.println("это не осаго");
+                    logger.info("ОКДП не прошел проверку по значению 65 - значит тендер явно не по Осаго");
                     return false;
                 }
-            }else return false;
-        }else return false;
+            }else {
+                logger.info("В ожидаемом поле не указано что тендер по 44-ФЗ");
+                return false;
+            }
+        /*}else {
+            logger.info("не удалось перейти к просмотру тендера");
+            return false;
+        }*/
     }
 
     private void minimalizeTenderTable() {
@@ -147,5 +283,13 @@ public class HuginService {
 
     public void closePage() {
         closeWebDriver();
+    }
+
+    public void setBotStartTimestamp () {
+        huginDao.setBotStartTimestamp("Hugin", LocalDateTime.now());
+    }
+
+    public void setBotEndTimestamp () {
+        huginDao.setBotEndTimestamp(LocalDateTime.now());
     }
 }
