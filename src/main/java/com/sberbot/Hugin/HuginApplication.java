@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.time.LocalDateTime;
 
+import static com.codeborne.selenide.Selenide.closeWebDriver;
 import static com.codeborne.selenide.Selenide.switchTo;
 
 @SpringBootApplication
@@ -30,41 +31,38 @@ public class HuginApplication  implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		logger.info("Пробуем залогинится");
+		LocalDateTime botStartDateTime = LocalDateTime.now();
 		Boolean loginSuccesed = huginService.getLogin();
-		for(int i = 0; i < 5; i ++) {
-		logger.info("Запускаем бота " + LocalDateTime.now());
-		huginService.setBotStartTimestamp();
-			if(loginSuccesed) {
-				AuctionModel auctionModelFromDb = huginService.getTenderFromDB();
-				if(auctionModelFromDb!=null) {
-					Boolean osagoTenderChecked = huginService.getCurrentTender();
-					if (osagoTenderChecked) {
-						System.out.println("Это тендер по Осаго - можно начинать подавать документы");
-						logger.info("Это тендер по Осаго - можно начинать подавать документы");
-						WebDriverRunner.closeWindow();
-						switchTo().window(0);
-						logger.info("Переходим на страницу с таблицей тендеров и готовимся подавать документы" + WebDriverRunner.url());
-						huginService.filinDoc(auctionModelFromDb.getAuctionNumber());
+		for(;;) {
+				logger.info("Запускаем бота " + LocalDateTime.now());
+				huginService.setBotStartTimestamp();
+				if(loginSuccesed) {
+					AuctionModel auctionModelFromDb = huginService.getTenderFromDB();
+					if(auctionModelFromDb!=null) {
+						Boolean osagoTenderChecked = huginService.getCurrentTender();
+						if (osagoTenderChecked) {
+							System.out.println("Это тендер по Осаго - можно начинать подавать документы");
+							logger.info("Это тендер по Осаго - можно начинать подавать документы");
+							WebDriverRunner.closeWindow();
+							switchTo().window(0);
+							logger.info("Переходим на страницу с таблицей тендеров и готовимся подавать документы" + WebDriverRunner.url());
+							huginService.filinDoc(auctionModelFromDb.getAuctionNumber(),botStartDateTime);
+						}else {
+							System.out.println("Тендер не прошел одну из проверок");
+							logger.info("Тендер не прошел одну из проверок");
+						}
 					}else {
-						System.out.println("Тендер не прошел одну из проверок");
-						logger.info("Тендер не прошел одну из проверок");
+						logger.info("В Базе данных не нашлось тендеров для проверки");
 					}
-					//WebDriverRunner.closeWindow();
-					//switchTo().window(0);
-					//System.out.println(WebDriverRunner.url());
-					//logger.info(WebDriverRunner.url());
 				}else {
-					logger.info("В Базе данных не нашлось тендеров для проверки");
+					System.out.println("Не удалось зайти под учетной записью с ЭЦП");
+					logger.info("Не удалось зайти под учетной записью с ЭЦП");
 				}
-			}else {
-				System.out.println("Не удалось зайти под учетной записью с ЭЦП");
-				logger.info("Не удалось зайти под учетной записью с ЭЦП");
-			}
-		logger.info("Бот закончил работу в " + LocalDateTime.now());
-			huginService.setBotEndTimestamp();
-			//huginService.getTenderUrlCheck();
+				logger.info("Бот закончил работу в " + LocalDateTime.now());
+				huginService.setBotEndTimestamp();
+				//huginService.getTenderUrlCheck();
 
-			Thread.sleep(1000);
+				Thread.sleep(1000);
 			//huginService.closePage();
 		}
 	}

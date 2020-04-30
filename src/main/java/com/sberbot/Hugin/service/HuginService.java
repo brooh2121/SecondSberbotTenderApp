@@ -2,6 +2,7 @@ package com.sberbot.Hugin.service;
 
 import com.codeborne.selenide.*;
 import com.sberbot.Hugin.dao.HuginDao;
+import com.sberbot.Hugin.dao.HuginOracleDao;
 import com.sberbot.Hugin.model.AuctionModel;
 import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -14,8 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.nio.channels.SeekableByteChannel;
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selectors.*;
 import static com.codeborne.selenide.Selenide.*;
@@ -27,6 +30,9 @@ public class HuginService {
 
     @Autowired
     HuginDao huginDao;
+
+    @Autowired
+    HuginOracleDao huginOracleDao;
 
     @Autowired
     Environment environment;
@@ -44,6 +50,7 @@ public class HuginService {
         Configuration.browserCapabilities.setCapability(InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS,true);
         Configuration.browserCapabilities.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true);
         Configuration.browser="Internet Explorer";
+        Configuration.reopenBrowserOnFail = true;
         //Configuration.browserCapabilities.setCapability("acceptSslCerts",true);
         //Configuration.browserCapabilities.setCapability("acceptInsecureCerts",true);
         logger.info("Переходим на страницу");
@@ -133,7 +140,10 @@ public class HuginService {
 
     }
 
-    public void filinDoc(String tenderNumber) {
+        public void filinDoc(String tenderNumber, LocalDateTime botStartDateTime) {
+
+        Long tenderNumberIdFromOracle = huginOracleDao.getTenderIdByNumber(tenderNumber);
+
         SelenideElement selenideElement = element(byId("resultTable"));
         selenideElement.shouldBe(Condition.visible);
         SelenideElement divonerow = selenideElement.find(byClassName("element-in-one-row"));
@@ -147,25 +157,28 @@ public class HuginService {
             SelenideElement button = element(byXpath("//table[@id='bxAccount']/tbody/tr/td[2]/input[2]"));
             button.click();
             switchTo().frame("spravIframe");
-            element(byXpath("//*[@id=\"XMLContainer\"]/table/tbody/tr[2]/td[1]/a/span")).shouldBe(Condition.visible).click();
+            element(byXpath("//*[@id=\"XMLContainer\"]/table/tbody/tr[2]/td[1]/a/span")).waitUntil(Condition.visible,60000).click();
             switchTo().defaultContent();
             String inputSchetNumber = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_phDocumentZone_nbtPurchaseRequest_bxAccount_account\"]")).getValue();
 
             if(StringUtils.hasText(inputSchetNumber)) {
                 logger.info("Удалось выбрать номер счета");
                 huginDao.docSendJourInsert(tenderNumber,"Выбрали номер счета",true,null);
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,1,botStartDateTime,LocalDateTime.now(),"Выбираем номер счета");
             }
 
             //согласие на поставку услуг
+            executeJavaScript("window.scrollBy(0,400)", "");
             element(byXpath("//*[@id=\"XMLContainer\"]/div/table[5]/tbody/tr[2]/td[2]/input[2]")).click();
             switchTo().frame("spravIframe");
-            element(byXpath("//*[@id=\"ctl00_phDataZone_btnOK\"]")).click();
+            element(byXpath("//*[@id=\"ctl00_phDataZone_btnOK\"]")).waitUntil(Condition.visible,3000).click();
             switchTo().defaultContent();
             String deliveryConsention = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_phDocumentZone_nbtPurchaseRequest_reqAgreementAnswer\"]")).getText();
 
             if(StringUtils.hasText(deliveryConsention)) {
                 logger.info("Согласились на предоставление услуг");
                 huginDao.docSendJourInsert(tenderNumber,"Согласились на предоставление услуг", true, null);
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,2,botStartDateTime,LocalDateTime.now(),"Соглашаемся на предоставление услуг");
             }
 
             //скроллим до кнопки формы согласия
@@ -179,6 +192,7 @@ public class HuginService {
             if (StringUtils.hasText(formConsensionDoc)) {
                 logger.info("Приложили документ согласия");
                 huginDao.docSendJourInsert(tenderNumber,"приложили документ на предоставление услуг", true, null);
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,3,botStartDateTime,LocalDateTime.now(),"Прикладываем документ согласия");
             }
 
             //скроллим до кнопки подписать декларацию
@@ -193,6 +207,7 @@ public class HuginService {
             if(StringUtils.hasText(declarationConsent)) {
                 logger.info("подписали декларацию");
                 huginDao.docSendJourInsert(tenderNumber,"подписали декларацию", true, null);
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,4,botStartDateTime,LocalDateTime.now(),"Подписываем декларацию");
             }
 
             //скроллим чтобы приложить документы 2 часть
@@ -206,6 +221,7 @@ public class HuginService {
             if(StringUtils.hasText(form2part)) {
                 logger.info("приложили документы, вторую часть");
                 huginDao.docSendJourInsert(tenderNumber,"приложили вторую часть документов", true, null);
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,5,botStartDateTime,LocalDateTime.now(),"Прикладываем документы - вторую часть");
             }
 
             //Подачу самой заявки пока не делаем
@@ -216,14 +232,16 @@ public class HuginService {
                             & StringUtils.hasText(formConsensionDoc)
                             & StringUtils.hasText(declarationConsent)
                             & StringUtils.hasText(form2part)) {
-                huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"пока что не отправляем");
+                element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).click();
+                huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", true,"подписываем и отправляем");
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),"нажимаем кнопку подписать и отправить");
+                element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).waitUntil(Condition.not(Condition.visible), 60000);
+                //huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"пока что не отправляем");
+                //huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),"Пока что не нажимаем последнюю кнопку подписать и отправить");
             }
-
-
         }catch (Exception e) {
             logger.error(e.getMessage());
         }
-
         open("https://www.sberbank-ast.ru/purchaseList.aspx");
 
     }
@@ -236,26 +254,26 @@ public class HuginService {
         System.out.println(WebDriverRunner.url());
         //if(!WebDriverRunner.url().equals("https://www.sberbank-ast.ru/purchaseList.aspx")) {
             logger.info("Переходим к просмотру данных по тендеру");
-            SelenideElement el = element(byXpath("//*/tbody/tr[2]/td[2]")).waitUntil(Condition.visible,2000);
+            SelenideElement el = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[1]/tbody/tr[2]/td[2]")).waitUntil(Condition.visible, 20000);
             if (String.valueOf(el).contains("44-ФЗ")) {
                 logger.info("Тендер прошел проверку по значению поля равному 44-ФЗ, переходим к проверке ОКПД");
                 String okpd = element(byCssSelector("span[content='leaf:code']")).text();
-                if(okpd.contains("65")) {
+                if (okpd.contains("65")) {
                     logger.info("Тендер прошел проверку ОКПД в части первых двух символов, равных 65");
-                    if (!okpd.contains("65.3.")||!okpd.contains("65.30")) {
+                    if (!okpd.contains("65.3.") || !okpd.contains("65.30")) {
                         logger.info("Тендер не относится к 65.3. и 65.30, следовательно подходит для подачи документов");
                         System.out.println("Это осаго");
                         return true;
-                    }else {
+                    } else {
                         System.out.println("так же не относится к осаго");
                         return false;
                     }
-                }else {
+                } else {
                     System.out.println("это не осаго");
                     logger.info("ОКДП не прошел проверку по значению 65 - значит тендер явно не по Осаго");
                     return false;
                 }
-            }else {
+            } else {
                 logger.info("В ожидаемом поле не указано что тендер по 44-ФЗ");
                 return false;
             }
