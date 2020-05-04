@@ -37,7 +37,8 @@ public class HiginOracleDaoImpl implements HuginOracleDao {
                 "'"+format.format(operationTimeStamp)+"',\n" +
                 ""+success+",\n" +
                 "SYSDATE,\n" +
-                "'"+remark+"'\n" +
+                "'"+remark+"',\n" +
+                "TO_TIMESTAMP('01.01.9000 01:00:00','dd.mm.yyyy hh24:mi:ss') + (to_timestamp('"+format.format(operationTimeStamp)+"') - to_timestamp('"+format.format(botStartTimeStamp)+"'))\n" +
                 ")";
         return jdbcTemplateOracleTend.update(query);
     }
