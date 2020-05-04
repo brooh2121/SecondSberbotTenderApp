@@ -22,7 +22,7 @@ public class HiginOracleDaoImpl implements HuginOracleDao {
 
 
     @Override
-    public int tenderaRowsJourInsert(Long tenderNumberId, int operationTypeId, LocalDateTime botStartDateTime, LocalDateTime operationDateTime,String remark) {
+    public int tenderaRowsJourInsert(Long tenderNumberId, int operationTypeId, LocalDateTime botStartDateTime, LocalDateTime operationDateTime,int success,String remark) {
 
         Timestamp botStartTimeStamp = Timestamp.valueOf(botStartDateTime);
         Timestamp operationTimeStamp = Timestamp.valueOf(operationDateTime);
@@ -35,7 +35,7 @@ public class HiginOracleDaoImpl implements HuginOracleDao {
                 ""+operationTypeId+",\n" +
                 "'"+format.format(botStartTimeStamp)+"',\n" +
                 "'"+format.format(operationTimeStamp)+"',\n" +
-                "1,\n" +
+                ""+success+",\n" +
                 "SYSDATE,\n" +
                 "'"+remark+"'\n" +
                 ")";

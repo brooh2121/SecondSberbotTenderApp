@@ -31,10 +31,10 @@ public class HuginApplication  implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		logger.info("Пробуем залогинится");
-		LocalDateTime botStartDateTime = LocalDateTime.now();
 		Boolean loginSuccesed = huginService.getLogin();
 		for(;;) {
 				logger.info("Запускаем бота " + LocalDateTime.now());
+				LocalDateTime botStartDateTime = LocalDateTime.now();
 				huginService.setBotStartTimestamp();
 				if(loginSuccesed) {
 					AuctionModel auctionModelFromDb = huginService.getTenderFromDB();

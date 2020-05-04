@@ -154,7 +154,7 @@ public class HuginService {
         try {
             //скроллим до нажатия кнопки на выбор номера счета
             executeJavaScript("window.scrollBy(0,400)", "");
-            SelenideElement button = element(byXpath("//table[@id='bxAccount']/tbody/tr/td[2]/input[2]"));
+            SelenideElement button = element(byXpath("//table[@id='bxAccount']/tbody/tr/td[2]/input[2]")).waitUntil(Condition.visible,1000);
             button.click();
             switchTo().frame("spravIframe");
             element(byXpath("//*[@id=\"XMLContainer\"]/table/tbody/tr[2]/td[1]/a/span")).waitUntil(Condition.visible,60000).click();
@@ -164,7 +164,7 @@ public class HuginService {
             if(StringUtils.hasText(inputSchetNumber)) {
                 logger.info("Удалось выбрать номер счета");
                 huginDao.docSendJourInsert(tenderNumber,"Выбрали номер счета",true,null);
-                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,1,botStartDateTime,LocalDateTime.now(),"Выбираем номер счета");
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,1,botStartDateTime,LocalDateTime.now(),1,"Выбираем номер счета");
             }
 
             //согласие на поставку услуг
@@ -178,7 +178,7 @@ public class HuginService {
             if(StringUtils.hasText(deliveryConsention)) {
                 logger.info("Согласились на предоставление услуг");
                 huginDao.docSendJourInsert(tenderNumber,"Согласились на предоставление услуг", true, null);
-                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,2,botStartDateTime,LocalDateTime.now(),"Соглашаемся на предоставление услуг");
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,2,botStartDateTime,LocalDateTime.now(),1,"Соглашаемся на предоставление услуг");
             }
 
             //скроллим до кнопки формы согласия
@@ -192,7 +192,7 @@ public class HuginService {
             if (StringUtils.hasText(formConsensionDoc)) {
                 logger.info("Приложили документ согласия");
                 huginDao.docSendJourInsert(tenderNumber,"приложили документ на предоставление услуг", true, null);
-                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,3,botStartDateTime,LocalDateTime.now(),"Прикладываем документ согласия");
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,3,botStartDateTime,LocalDateTime.now(),1,"Прикладываем документ согласия");
             }
 
             //скроллим до кнопки подписать декларацию
@@ -207,7 +207,7 @@ public class HuginService {
             if(StringUtils.hasText(declarationConsent)) {
                 logger.info("подписали декларацию");
                 huginDao.docSendJourInsert(tenderNumber,"подписали декларацию", true, null);
-                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,4,botStartDateTime,LocalDateTime.now(),"Подписываем декларацию");
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,4,botStartDateTime,LocalDateTime.now(),1,"Подписываем декларацию");
             }
 
             //скроллим чтобы приложить документы 2 часть
@@ -221,7 +221,7 @@ public class HuginService {
             if(StringUtils.hasText(form2part)) {
                 logger.info("приложили документы, вторую часть");
                 huginDao.docSendJourInsert(tenderNumber,"приложили вторую часть документов", true, null);
-                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,5,botStartDateTime,LocalDateTime.now(),"Прикладываем документы - вторую часть");
+                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,5,botStartDateTime,LocalDateTime.now(),1,"Прикладываем документы - вторую часть");
             }
 
             //Подачу самой заявки пока не делаем
@@ -233,9 +233,16 @@ public class HuginService {
                             & StringUtils.hasText(declarationConsent)
                             & StringUtils.hasText(form2part)) {
                 element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).click();
-                huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", true,"подписываем и отправляем");
-                huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),"нажимаем кнопку подписать и отправить");
                 element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).waitUntil(Condition.not(Condition.visible), 60000);
+                SelenideElement errorMessage = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_errorMsg\"]"));
+                if(errorMessage.text().contains("Ваш документ зарегистрирован как отвергнутый.")) {
+                    huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"подписываем и отправляем");
+                    huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),0,"нажимаем кнопку подписать и отправить");
+                }else {
+                    huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", true,"подписываем и отправляем");
+                    huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),1,"нажимаем кнопку подписать и отправить");
+                }
+
                 //huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"пока что не отправляем");
                 //huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),"Пока что не нажимаем последнюю кнопку подписать и отправить");
             }
