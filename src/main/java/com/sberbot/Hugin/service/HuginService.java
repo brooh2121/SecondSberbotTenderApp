@@ -58,8 +58,8 @@ public class HuginService {
         WebDriverRunner.getWebDriver().manage().window().maximize();
 
         element(byId("ctl00_ctl00_loginctrl_anchSignOn")).click();
-        //confirm();
-        element(byId("mainContent_DDL1")).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
+
+        element(byId("mainContent_DDL1")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
         element(byId("btnEnter")).click();
         //minimalizeTenderTable();
 
@@ -258,17 +258,18 @@ public class HuginService {
         ElementsCollection els = divonerow.findAll(byCssSelector("input"));
         els.get(1).click();
         switchTo().window(1);
+        WebDriverRunner.getWebDriver().manage().timeouts().pageLoadTimeout(10,TimeUnit.SECONDS);
         System.out.println(WebDriverRunner.url());
-        //if(!WebDriverRunner.url().equals("https://www.sberbank-ast.ru/purchaseList.aspx")) {
+        if(!WebDriverRunner.url().equals("https://www.sberbank-ast.ru/purchaseList.aspx")) {
             logger.info("Переходим к просмотру данных по тендеру");
-            SelenideElement el = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[1]/tbody/tr[2]/td[2]")).waitUntil(Condition.visible, 20000);
+            SelenideElement el = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[1]/tbody/tr[2]/td[2]")).waitUntil(Condition.visible, 60000);
             if (String.valueOf(el).contains("44-ФЗ")) {
                 logger.info("Тендер прошел проверку по значению поля равному 44-ФЗ, переходим к проверке ОКПД");
                 String okpd = element(byCssSelector("span[content='leaf:code']")).text();
                 if (okpd.contains("65")) {
                     logger.info("Тендер прошел проверку ОКПД в части первых двух символов, равных 65");
-                    if (!okpd.contains("65.3.") || !okpd.contains("65.30")) {
-                        logger.info("Тендер не относится к 65.3. и 65.30, следовательно подходит для подачи документов");
+                    if (!okpd.contains("65.3.") || !okpd.contains("65.30") || !okpd.contains("65.12.49.000")) {
+                        logger.info("Тендер не относится к 65.3. и 65.30 и 65.12.49.000 (страхование имущества), следовательно подходит для подачи документов");
                         System.out.println("Это осаго");
                         return true;
                     } else {
@@ -284,10 +285,10 @@ public class HuginService {
                 logger.info("В ожидаемом поле не указано что тендер по 44-ФЗ");
                 return false;
             }
-        /*}else {
+        }else {
             logger.info("не удалось перейти к просмотру тендера");
             return false;
-        }*/
+        }
     }
 
     private void minimalizeTenderTable() {
