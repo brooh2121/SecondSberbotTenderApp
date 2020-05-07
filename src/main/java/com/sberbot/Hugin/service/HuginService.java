@@ -251,7 +251,15 @@ public class HuginService {
                             & StringUtils.hasText(form2part)) {
                 element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).click();
                 element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).waitUntil(Condition.not(Condition.visible), 60000);
-                SelenideElement errorMessage = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_errorMsg\"]"));
+
+                SelenideElement errorMessage;
+                try {
+                    errorMessage = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_errorMsg\"]"));
+                }catch (Exception e) {
+                    logger.error(e.getMessage());
+                    errorMessage = null;
+                }
+
                 if(errorMessage.text().contains("Ваш документ зарегистрирован как отвергнутый.")) {
                     huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"подписываем и отправляем");
                     huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),0,"нажимаем кнопку подписать и отправить");
