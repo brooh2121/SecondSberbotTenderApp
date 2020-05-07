@@ -4,7 +4,12 @@ import com.codeborne.selenide.*;
 import com.sberbot.Hugin.dao.HuginDao;
 import com.sberbot.Hugin.dao.HuginOracleDao;
 import com.sberbot.Hugin.model.AuctionModel;
+import org.openqa.selenium.UnexpectedAlertBehaviour;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.ie.InternetExplorerDriver;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -38,6 +43,20 @@ public class HuginService {
     Environment environment;
 
     public boolean getLogin() {
+
+        File driverFile = new File (environment.getProperty("webdriver.chrome.path"));
+        System.setProperty("webdriver.chrome.driver",driverFile.getAbsolutePath());
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--disable-notifications");
+        options.addExtensions(new File(environment.getProperty("criptopro.plugin.path")));
+        DesiredCapabilities capabilities = new DesiredCapabilities();
+        capabilities.setCapability(CapabilityType.UNEXPECTED_ALERT_BEHAVIOUR, UnexpectedAlertBehaviour.IGNORE);
+        options.merge(capabilities);
+        ChromeDriver driver = new ChromeDriver(options);
+        WebDriverRunner.setWebDriver(driver);
+        Configuration.reopenBrowserOnFail = true;
+
+        /*
         File driverFile = new File(environment.getProperty("webdriver.path"));
         System.setProperty("webdriver.ie.driver",driverFile.getAbsolutePath());
         Configuration.browserCapabilities.setCapability("ie.forceCreateProcessApi",true);
@@ -51,14 +70,12 @@ public class HuginService {
         Configuration.browserCapabilities.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true);
         Configuration.browser="Internet Explorer";
         Configuration.reopenBrowserOnFail = true;
-        //Configuration.browserCapabilities.setCapability("acceptSslCerts",true);
-        //Configuration.browserCapabilities.setCapability("acceptInsecureCerts",true);
+        */
+
         logger.info("Переходим на страницу");
         open("https://www.sberbank-ast.ru/purchaseList.aspx");
         WebDriverRunner.getWebDriver().manage().window().maximize();
-
         element(byId("ctl00_ctl00_loginctrl_anchSignOn")).click();
-
         element(byId("mainContent_DDL1")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
         element(byId("btnEnter")).click();
         //minimalizeTenderTable();
@@ -75,7 +92,7 @@ public class HuginService {
     private boolean getTenderUrlCheck () {
         String url = WebDriverRunner.url();
         String user = element(byCssSelector("#ctl00_ctl00_loginctrl_link")).text();
-        if(url.equals("https://www.sberbank-ast.ru/purchaseList.aspx")&user.equals("Мартьянова Надежда Васильевна ИНН: 7709031643 (головная организация)")) {
+        if(/*url.equals("https://www.sberbank-ast.ru/purchaseList.aspx")&*/user.equals("Мартьянова Надежда Васильевна ИНН: 7709031643 (головная организация)")) {
             logger.info("Мы успешно залогинились и находимся на странице поиска тендеров");
             return true;
         }else {
@@ -153,7 +170,7 @@ public class HuginService {
 
         try {
             //скроллим до нажатия кнопки на выбор номера счета
-            executeJavaScript("window.scrollBy(0,400)", "");
+            //executeJavaScript("window.scrollBy(0,400)", "");
             SelenideElement button = element(byXpath("//table[@id='bxAccount']/tbody/tr/td[2]/input[2]")).waitUntil(Condition.visible,1000);
             button.click();
             switchTo().frame("spravIframe");
@@ -168,7 +185,7 @@ public class HuginService {
             }
 
             //согласие на поставку услуг
-            executeJavaScript("window.scrollBy(0,400)", "");
+            //executeJavaScript("window.scrollBy(0,400)", "");
             element(byXpath("//*[@id=\"XMLContainer\"]/div/table[5]/tbody/tr[2]/td[2]/input[2]")).click();
             switchTo().frame("spravIframe");
             element(byXpath("//*[@id=\"ctl00_phDataZone_btnOK\"]")).waitUntil(Condition.visible,3000).click();
@@ -182,7 +199,7 @@ public class HuginService {
             }
 
             //скроллим до кнопки формы согласия
-            executeJavaScript("window.scrollBy(0,400)", "");
+            //executeJavaScript("window.scrollBy(0,400)", "");
             element(byXpath("//*[@id=\"ctl00$ctl00$phWorkZone$phDocumentZone$nbtPurchaseRequest$reqDocsPart1tblDoc\"]/tbody/tr/td[2]/input[1]")).click();
             switchTo().frame("spravIframe");
             element(byXpath("//*[@id=\"ctl00_phDataZone_FileStoreContainer\"]/div[1]/a")).click();
@@ -196,7 +213,7 @@ public class HuginService {
             }
 
             //скроллим до кнопки подписать декларацию
-            executeJavaScript("window.scrollBy(0,1000)", "");
+            //executeJavaScript("window.scrollBy(0,1000)", "");
             element(byXpath("//*[@id=\"tblrequireddocs22\"]/tbody/tr[4]/td[2]/input[2]")).click();
             switchTo().frame("spravIframe");
             executeJavaScript("window.scrollBy(0,700)", "");
@@ -211,7 +228,7 @@ public class HuginService {
             }
 
             //скроллим чтобы приложить документы 2 часть
-            executeJavaScript("window.scrollBy(0,400)", "");
+            //executeJavaScript("window.scrollBy(0,400)", "");
             element(byXpath("//*[@id=\"ctl00$ctl00$phWorkZone$phDocumentZone$nbtPurchaseRequest$FileAttach2tblDoc\"]/tbody/tr/td[2]/input[1]")).click();
             switchTo().frame("spravIframe");
             element(byXpath("//*[@id=\"ctl00_phDataZone_FileStoreContainer\"]/div[2]/a")).click();
