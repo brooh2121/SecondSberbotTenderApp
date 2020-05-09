@@ -50,7 +50,7 @@ public class HuginService {
         options.addArguments("--disable-notifications");
         options.addExtensions(new File(environment.getProperty("criptopro.plugin.path")));
         DesiredCapabilities capabilities = new DesiredCapabilities();
-        capabilities.setCapability(CapabilityType.UNEXPECTED_ALERT_BEHAVIOUR, UnexpectedAlertBehaviour.IGNORE);
+        capabilities.setCapability(CapabilityType.UNEXPECTED_ALERT_BEHAVIOUR, UnexpectedAlertBehaviour.ACCEPT);
         options.merge(capabilities);
         ChromeDriver driver = new ChromeDriver(options);
         WebDriverRunner.setWebDriver(driver);
@@ -72,10 +72,14 @@ public class HuginService {
         Configuration.reopenBrowserOnFail = true;
         */
 
+        //WebDriverWait wait = new WebDriverWait(WebDriverRunner.getWebDriver(),10);
         logger.info("Переходим на страницу");
         open("https://www.sberbank-ast.ru/purchaseList.aspx");
         WebDriverRunner.getWebDriver().manage().window().maximize();
-        element(byId("ctl00_ctl00_loginctrl_anchSignOn")).click();
+        //SelenideElement loginButton = element(byId("ctl00_ctl00_loginctrl_anchSignOn"));
+        SelenideElement loginButton = element(byXpath("//*[@id=\"ctl00_ctl00_loginctrl_anchSignOn\"]"));
+        loginButton.click();
+
         element(byId("mainContent_DDL1")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
         element(byId("btnEnter")).click();
         //minimalizeTenderTable();
@@ -91,7 +95,7 @@ public class HuginService {
 
     private boolean getTenderUrlCheck () {
         String url = WebDriverRunner.url();
-        String user = element(byCssSelector("#ctl00_ctl00_loginctrl_link")).text();
+        String user = element(byCssSelector("#ctl00_ctl00_loginctrl_link")).waitUntil(Condition.visible,1000).text();
         if(/*url.equals("https://www.sberbank-ast.ru/purchaseList.aspx")&*/user.equals("Мартьянова Надежда Васильевна ИНН: 7709031643 (головная организация)")) {
             logger.info("Мы успешно залогинились и находимся на странице поиска тендеров");
             return true;
@@ -200,6 +204,7 @@ public class HuginService {
 
             //скроллим до кнопки формы согласия
             //executeJavaScript("window.scrollBy(0,400)", "");
+            /*
             element(byXpath("//*[@id=\"ctl00$ctl00$phWorkZone$phDocumentZone$nbtPurchaseRequest$reqDocsPart1tblDoc\"]/tbody/tr/td[2]/input[1]")).click();
             switchTo().frame("spravIframe");
             element(byXpath("//*[@id=\"ctl00_phDataZone_FileStoreContainer\"]/div[1]/a")).click();
@@ -211,6 +216,9 @@ public class HuginService {
                 huginDao.docSendJourInsert(tenderNumber,"приложили документ на предоставление услуг", true, null);
                 huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,3,botStartDateTime,LocalDateTime.now(),1,"Прикладываем документ согласия");
             }
+            */
+
+
 
             //скроллим до кнопки подписать декларацию
             //executeJavaScript("window.scrollBy(0,1000)", "");
@@ -233,7 +241,7 @@ public class HuginService {
             switchTo().frame("spravIframe");
             element(byXpath("//*[@id=\"ctl00_phDataZone_FileStoreContainer\"]/div[2]/a")).click();
             switchTo().defaultContent();
-            String form2part = element(byXpath("//*[@id=\"txbFileName\"]/span")).getText();
+            String form2part = element(byXpath("/html/body/form/div[7]/div/div[1]/table/tbody/tr[1]/td/div/div/table[10]/tbody/tr/td[2]/div/div/table/tbody/tr/td[1]/a/span")).getText();
 
             if(StringUtils.hasText(form2part)) {
                 logger.info("приложили документы, вторую часть");
@@ -246,7 +254,7 @@ public class HuginService {
             if (
                     StringUtils.hasText(inputSchetNumber)
                             & StringUtils.hasText(deliveryConsention)
-                            & StringUtils.hasText(formConsensionDoc)
+                            //& StringUtils.hasText(formConsensionDoc)
                             & StringUtils.hasText(declarationConsent)
                             & StringUtils.hasText(form2part)) {
                 element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).click();

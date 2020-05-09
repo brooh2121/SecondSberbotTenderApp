@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.core.env.Environment;
 
 import java.time.LocalDateTime;
 
@@ -20,9 +21,13 @@ public class HuginApplication  implements CommandLineRunner {
 
 	private static final Logger logger = LoggerFactory.getLogger(HuginApplication.class.getSimpleName());
 
+	private int counter = 0;
 
 	@Autowired
     HuginService huginService;
+
+	@Autowired
+	Environment environment;
 
 	public static void main(String[] args) {
 		SpringApplication.run(HuginApplication.class, args);
@@ -33,6 +38,11 @@ public class HuginApplication  implements CommandLineRunner {
 		logger.info("Пробуем залогинится");
 		Boolean loginSuccesed = huginService.getLogin();
 		for(;;) {
+				if(counter == Integer.parseInt(environment.getProperty("bot.browser.reloadingInterval"))) {
+					logger.info("Перезапускаем браузер");
+					counter = callBrowserReload(counter);
+				}
+				counter++;
 				logger.info("Запускаем бота " + LocalDateTime.now());
 				LocalDateTime botStartDateTime = LocalDateTime.now();
 				huginService.setBotStartTimestamp();
@@ -65,5 +75,11 @@ public class HuginApplication  implements CommandLineRunner {
 				Thread.sleep(1000);
 			//huginService.closePage();
 		}
+	}
+
+	public int callBrowserReload(int counter) {
+		closeWebDriver();
+		huginService.getLogin();
+		return counter = 0;
 	}
 }
