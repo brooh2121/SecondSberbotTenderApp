@@ -77,7 +77,7 @@ public class HuginApplication  implements CommandLineRunner {
 		}
 	}
 
-	public int callBrowserReload(int counter) {
+	public int callBrowserReload(int counter) throws InterruptedException{
 		closeWebDriver();
 		huginService.getLogin();
 		return counter = 0;

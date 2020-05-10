@@ -23,6 +23,7 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.nio.channels.SeekableByteChannel;
 import java.time.LocalDateTime;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selectors.*;
@@ -42,7 +43,7 @@ public class HuginService {
     @Autowired
     Environment environment;
 
-    public boolean getLogin() {
+    public boolean getLogin() throws InterruptedException{
 
         File driverFile = new File (environment.getProperty("webdriver.chrome.path"));
         System.setProperty("webdriver.chrome.driver",driverFile.getAbsolutePath());
@@ -82,6 +83,8 @@ public class HuginService {
 
         element(byId("mainContent_DDL1")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
         element(byId("btnEnter")).click();
+
+        Thread.sleep(500);
         //minimalizeTenderTable();
 
         if (getTenderUrlCheck()) {
