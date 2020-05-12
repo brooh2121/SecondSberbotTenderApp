@@ -23,6 +23,7 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.nio.channels.SeekableByteChannel;
 import java.time.LocalDateTime;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -266,18 +267,24 @@ public class HuginService {
                 SelenideElement errorMessage;
                 try {
                     errorMessage = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_errorMsg\"]"));
-                }catch (Exception e) {
+                    //if(errorMessage.text().contains("Ваш документ зарегистрирован как отвергнутый.")) {
+                        huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"подписываем и отправляем");
+                        huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),0,"нажимаем кнопку подписать и отправить");
+                   //}
+                }catch (NoSuchElementException e) {
                     logger.error(e.getMessage());
-                    errorMessage = null;
+                    huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", true,"подписываем и отправляем");
+                    huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),1,"нажимаем кнопку подписать и отправить");
                 }
 
+                /*
                 if(errorMessage.text().contains("Ваш документ зарегистрирован как отвергнутый.")) {
                     huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"подписываем и отправляем");
                     huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),0,"нажимаем кнопку подписать и отправить");
                 }else {
                     huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", true,"подписываем и отправляем");
                     huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),1,"нажимаем кнопку подписать и отправить");
-                }
+                }*/
 
                 //huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"пока что не отправляем");
                 //huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),"Пока что не нажимаем последнюю кнопку подписать и отправить");
