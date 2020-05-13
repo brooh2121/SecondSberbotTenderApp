@@ -1,6 +1,7 @@
 package com.sberbot.Hugin.service;
 
 import com.codeborne.selenide.*;
+import com.codeborne.selenide.ex.ElementNotFound;
 import com.sberbot.Hugin.dao.HuginDao;
 import com.sberbot.Hugin.dao.HuginOracleDao;
 import com.sberbot.Hugin.model.AuctionModel;
@@ -264,14 +265,16 @@ public class HuginService {
                 element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).click();
                 element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).waitUntil(Condition.not(Condition.visible), 60000);
 
-                SelenideElement errorMessage;
+                String errorMessage;
                 try {
-                    errorMessage = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_errorMsg\"]"));
+                    errorMessage = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_errorMsg\"]")).text();
+                    logger.info("Ошибка подачи:" + errorMessage);
                     //if(errorMessage.text().contains("Ваш документ зарегистрирован как отвергнутый.")) {
                         huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", false,"подписываем и отправляем");
                         huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),0,"нажимаем кнопку подписать и отправить");
                    //}
-                }catch (NoSuchElementException e) {
+                }catch (ElementNotFound e) {
+                    logger.info("Ошибка дубликата по тендеру с номером " + tenderNumberIdFromOracle + " не найдена, подали документы первыми");
                     logger.error(e.getMessage());
                     huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", true,"подписываем и отправляем");
                     huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),1,"нажимаем кнопку подписать и отправить");
@@ -311,8 +314,8 @@ public class HuginService {
                 String okpd = element(byCssSelector("span[content='leaf:code']")).text();
                 if (okpd.contains("65")) {
                     logger.info("Тендер прошел проверку ОКПД в части первых двух символов, равных 65");
-                    if (!okpd.contains("65.3.") || !okpd.contains("65.30") || !okpd.contains("65.12.49.000")) {
-                        logger.info("Тендер не относится к 65.3. и 65.30 и 65.12.49.000 (страхование имущества), следовательно подходит для подачи документов");
+                    if (!okpd.contains("65.3.") || !okpd.contains("65.30") || !okpd.contains("65.12.49.000") || !okpd.contains("65.12.50.000")) {
+                        logger.info("Тендер не относится к 65.3. ,65.30, 65.12.49.000 (страхование имущества),65.12.50.000 (страхование общей ответственности), следовательно подходит для подачи документов");
                         System.out.println("Это осаго");
                         return true;
                     } else {

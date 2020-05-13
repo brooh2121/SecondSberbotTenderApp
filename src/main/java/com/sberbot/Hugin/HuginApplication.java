@@ -3,6 +3,7 @@ package com.sberbot.Hugin;
 import com.codeborne.selenide.WebDriverRunner;
 import com.sberbot.Hugin.model.AuctionModel;
 import com.sberbot.Hugin.service.HuginService;
+import com.sberbot.Hugin.service.MailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class HuginApplication  implements CommandLineRunner {
 
 	@Autowired
     HuginService huginService;
+
+	@Autowired
+	MailService mailService;
 
 	@Autowired
 	Environment environment;
@@ -57,6 +61,7 @@ public class HuginApplication  implements CommandLineRunner {
 							switchTo().window(0);
 							logger.info("Переходим на страницу с таблицей тендеров и готовимся подавать документы" + WebDriverRunner.url());
 							huginService.filinDoc(auctionModelFromDb.getAuctionNumber(),botStartDateTime);
+							mailService.sendEmailNotification(auctionModelFromDb.getAuctionNumber());
 						}else {
 							System.out.println("Тендер не прошел одну из проверок");
 							logger.info("Тендер не прошел одну из проверок");
