@@ -274,7 +274,7 @@ public class HuginService {
                         huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),0,"нажимаем кнопку подписать и отправить");
                    //}
                 }catch (ElementNotFound e) {
-                    logger.info("Ошибка дубликата по тендеру с номером " + tenderNumberIdFromOracle + " не найдена, подали документы первыми");
+                    logger.info("Ошибка дубликата по тендеру с номером " + tenderNumber + " не найдена, подали документы первыми");
                     logger.error(e.getMessage());
                     huginDao.docSendJourInsert(tenderNumber,"нажатие кнопки подписать и отправить", true,"подписываем и отправляем");
                     huginOracleDao.tenderaRowsJourInsert(tenderNumberIdFromOracle,6,botStartDateTime,LocalDateTime.now(),1,"нажимаем кнопку подписать и отправить");
@@ -316,14 +316,13 @@ public class HuginService {
                     logger.info("Тендер прошел проверку ОКПД в части первых двух символов, равных 65");
                     if (!okpd.contains("65.3.") || !okpd.contains("65.30") || !okpd.contains("65.12.49.000") || !okpd.contains("65.12.50.000")) {
                         logger.info("Тендер не относится к 65.3. ,65.30, 65.12.49.000 (страхование имущества),65.12.50.000 (страхование общей ответственности), следовательно подходит для подачи документов");
-                        System.out.println("Это осаго");
+                        logger.info("Это осаго");
                         return true;
                     } else {
-                        System.out.println("так же не относится к осаго");
+                        logger.info("так же не относится к осаго");
                         return false;
                     }
                 } else {
-                    System.out.println("это не осаго");
                     logger.info("ОКДП не прошел проверку по значению 65 - значит тендер явно не по Осаго");
                     return false;
                 }

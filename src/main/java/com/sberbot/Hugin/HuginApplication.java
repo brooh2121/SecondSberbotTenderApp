@@ -40,6 +40,7 @@ public class HuginApplication  implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		logger.info("Пробуем залогинится");
+		mailService.sendHelloBotStartingEmail();
 		Boolean loginSuccesed = huginService.getLogin();
 		for(;;) {
 				if(counter == Integer.parseInt(environment.getProperty("bot.browser.reloadingInterval"))) {
@@ -61,6 +62,7 @@ public class HuginApplication  implements CommandLineRunner {
 							switchTo().window(0);
 							logger.info("Переходим на страницу с таблицей тендеров и готовимся подавать документы" + WebDriverRunner.url());
 							huginService.filinDoc(auctionModelFromDb.getAuctionNumber(),botStartDateTime);
+							logger.info("передаем номер тендера" + auctionModelFromDb.getAuctionNumber() + " для отправки рассылки");
 							mailService.sendEmailNotification(auctionModelFromDb.getAuctionNumber());
 						}else {
 							System.out.println("Тендер не прошел одну из проверок");

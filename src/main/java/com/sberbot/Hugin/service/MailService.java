@@ -12,6 +12,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import javax.mail.internet.MimeMessage;
+import java.time.LocalDateTime;
 
 
 @Service
@@ -45,6 +46,7 @@ public class MailService {
                 helper.setFrom(environment.getProperty("spring.mail.username"));
                 helper.setTo(new String [] {"dimich14@gmail.com","algor@makc.ru","achistov@makc.ru","gagavrilova@makc.ru","past@makc.ru"});
                 helper.setText(emailText);
+                javaMailSender.send(mimeMessage);
             }catch (Exception e) {
                 logger.error(e.getMessage());
             }
@@ -52,5 +54,20 @@ public class MailService {
             logger.info("Не отправляем письмо, так как не первые подали заявку на тендер с номером " + tenderNumber);
         }
 
+    }
+
+    public void sendHelloBotStartingEmail() {
+        String emailText = "Бот Hugin запущен в" + LocalDateTime.now();
+        try {
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage);
+            helper.setSubject("Старт бота");
+            helper.setFrom(environment.getProperty("spring.mail.username"));
+            helper.setTo(new String [] {"dimich14@gmail.com","koks-gops@ya.ru"});
+            helper.setText(emailText);
+            javaMailSender.send(mimeMessage);
+        }catch (Exception e) {
+            logger.error(e.getMessage());
+        }
     }
 }
