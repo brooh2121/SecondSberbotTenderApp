@@ -152,4 +152,20 @@ public class currentTenderTest {
         //els.get(0).click();
         Thread.sleep(1000);
     }
+
+    @Test
+    void checkGovUrlText() throws InterruptedException {
+        open("https://www.sberbank-ast.ru/purchaseview.aspx?id=7568034");
+        String govUrlText  = element(byXpath("//*[@id=\"newinfolink\"]/td[2]/a/span")).text();
+        System.out.println(govUrlText);
+        //*[@id="newinfolink"]/td[2]/a/span
+    }
+
+    @Test
+    void checkTenderEndPlanDate() {
+        open("https://www.sberbank-ast.ru/purchaseview.aspx?id=7568943");
+        String tenderEndPlanDate = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[14]/tbody/tr[2]/td[2]/span[1]")).text();
+        String tenderEndPlanTime = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[14]/tbody/tr[2]/td[2]/span[2]")).text();
+        System.out.println(tenderEndPlanDate + " " + tenderEndPlanTime);
+    }
 }

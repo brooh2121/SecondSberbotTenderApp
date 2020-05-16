@@ -2,6 +2,8 @@ package com.sberbot.Hugin.service;
 
 import com.sberbot.Hugin.dao.HuginMailSenderDao;
 
+import com.sberbot.Hugin.dao.HuginOracleDao;
+import com.sberbot.Hugin.model.AuctionModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,9 @@ public class MailService {
     @Qualifier("mainMailSender")
     JavaMailSender javaMailSender;
 
+    @Autowired
+    HuginOracleDao oracleDao;
+
     private static final Logger logger = LoggerFactory.getLogger(MailService.class.getSimpleName());
 
     private boolean checkFilinDocSuccessStatus(String tenderNumber) {
@@ -36,24 +41,42 @@ public class MailService {
 
 
     public void sendEmailNotification (String tenderNumber) {
-        String emailText = "Добрый день, была успешно подана заявка на тендер с номером " + tenderNumber + ".";
+        AuctionModel auctionModelFromOracle = huginMailSenderDao.getModelFromOracle(tenderNumber);
+        Long tenderNumberId = oracleDao.getTenderIdByNumber(tenderNumber);
+        String tenderFilingApplicationDate = huginMailSenderDao.getFilingApplicationDate(tenderNumberId);
+        String defaultError = "Ошибка - Заявка на участие в электронном аукционе возвращена на основании п.2 ч.11 ст. 66 Федерального закона от 05.04.2013 г. № 44-ФЗ: заявка на участие в аукционе уже подана! Для повторной подачи необходимо отозвать ранее поданную заявку. \n";
+        String textEmailOrganizationName = "Организатор торгов - наименование организации: " + auctionModelFromOracle.getOrgName() + "\n";
+        String servicePlace = "Место оказания услуги: \n";
+        String textEmailTenderName = "Наименование объекта закупки: " + auctionModelFromOracle.getTenderName() + "\n";
+        String textEmailTenderNumber = "Номер извещения: " + auctionModelFromOracle.getAuctionNumber() + "\n";
+        String textEmailTenderSum = "НМЦК: " + auctionModelFromOracle.getSum() + "\n";
+        String textEmailTenderPlaceUrl = "Ссылка на электронный аукцион на площадке: " + auctionModelFromOracle.getTenderPlaceUrl() + "\n";
+        String textEmailTenderGovUrl = "Ссылка на извещение, опубликованное в ЕИС: " + auctionModelFromOracle.getTenderGovUrl() + "\n";
+        String textEmailTenderPublicationDate = "Дата публикации: " + auctionModelFromOracle.getPublicDate() + "\n";
+        String textEmailTenderDateFilingDoc = "Дата подачи: " + tenderFilingApplicationDate;
+        String textEmailResult = textEmailOrganizationName + servicePlace + textEmailTenderName + textEmailTenderNumber + textEmailTenderSum + textEmailTenderPlaceUrl + textEmailTenderGovUrl + textEmailTenderPublicationDate + textEmailTenderDateFilingDoc;
+        String textEmailResultFail = defaultError + textEmailOrganizationName + servicePlace + textEmailTenderName + textEmailTenderNumber + textEmailTenderSum + textEmailTenderPlaceUrl + textEmailTenderGovUrl + textEmailTenderPublicationDate + textEmailTenderDateFilingDoc;
         if(checkFilinDocSuccessStatus(tenderNumber)) {
-            try {
-                logger.info("Пробуем отправить email после успешно поданной заявки");
-                MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage);
-                helper.setSubject("Новый тендер");
-                helper.setFrom(environment.getProperty("spring.mail.username"));
-                helper.setTo(new String [] {"dimich14@gmail.com","algor@makc.ru","achistov@makc.ru","gagavrilova@makc.ru","past@makc.ru"});
-                helper.setText(emailText);
-                javaMailSender.send(mimeMessage);
-            }catch (Exception e) {
-                logger.error(e.getMessage());
-            }
+            logger.info("Пробуем отправить email после успешно поданной заявки на тендер с номером" + tenderNumber);
+            emailSend(textEmailResult);
         }else {
-            logger.info("Не отправляем письмо, так как не первые подали заявку на тендер с номером " + tenderNumber);
+            logger.info("Отправляем другое письмо,если не первые подали заявку на тендер с номером " + tenderNumber);
+            emailSend(textEmailResultFail);
         }
+    }
 
+    private void emailSend(String emailText) {
+        try {
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage);
+            helper.setSubject("Информация о подаче документов по электронному аукциону на площадке Sber");
+            helper.setFrom(environment.getProperty("spring.mail.username"));
+            helper.setTo(new String [] {"dimich14@gmail.com","algor@makc.ru","achistov@makc.ru","gagavrilova@makc.ru","past@makc.ru"});
+            helper.setText(emailText);
+            javaMailSender.send(mimeMessage);
+        }catch (Exception e) {
+            logger.error(e.getMessage());
+        }
     }
 
     public void sendHelloBotStartingEmail() {

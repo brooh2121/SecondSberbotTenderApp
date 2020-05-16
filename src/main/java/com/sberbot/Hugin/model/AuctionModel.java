@@ -13,11 +13,13 @@ public class AuctionModel {
     private String tenderEndDate;
     private String sum;
     private String tenderStatus;
+    private String tenderPlaceUrl;
+    private String tenderGovUrl;
 
     public AuctionModel() {
     }
 
-    public AuctionModel(String auctionNumber, String orgName, String tenderName, String tenderType, String publicDate, String tenderBegDate, String tenderEndDate, String sum, String tenderStatus) {
+    public AuctionModel(String auctionNumber, String orgName, String tenderName, String tenderType, String publicDate, String tenderBegDate, String tenderEndDate, String sum, String tenderStatus,String tenderPlaceUrl, String tenderGovUrl) {
         this.auctionNumber = auctionNumber;
         this.orgName = orgName;
         this.tenderName = tenderName;
@@ -27,6 +29,8 @@ public class AuctionModel {
         this.tenderEndDate = tenderEndDate;
         this.sum = sum;
         this.tenderStatus = tenderStatus;
+        this.tenderPlaceUrl = tenderPlaceUrl;
+        this.tenderGovUrl = tenderGovUrl;
     }
 
     public String getAuctionNumber() {
@@ -99,6 +103,22 @@ public class AuctionModel {
 
     public void setTenderStatus(String tenderStatus) {
         this.tenderStatus = tenderStatus;
+    }
+
+    public String getTenderPlaceUrl() {
+        return tenderPlaceUrl;
+    }
+
+    public void setTenderPlaceUrl(String tenderPlaceUrl) {
+        this.tenderPlaceUrl = tenderPlaceUrl;
+    }
+
+    public String getTenderGovUrl() {
+        return tenderGovUrl;
+    }
+
+    public void setTenderGovUrl(String tenderGovUrl) {
+        this.tenderGovUrl = tenderGovUrl;
     }
 
     @Override

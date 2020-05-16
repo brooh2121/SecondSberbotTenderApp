@@ -59,29 +59,19 @@ public class HuginService {
         WebDriverRunner.setWebDriver(driver);
         Configuration.reopenBrowserOnFail = true;
 
-        /*
-        File driverFile = new File(environment.getProperty("webdriver.path"));
-        System.setProperty("webdriver.ie.driver",driverFile.getAbsolutePath());
-        Configuration.browserCapabilities.setCapability("ie.forceCreateProcessApi",true);
-        Configuration.browserCapabilities.setCapability("nativeEvents", true);
-        Configuration.browserCapabilities.setCapability("unexpectedAlertBehaviour", "accept");
-        Configuration.browserCapabilities.setCapability("ignoreProtectedModeSettings", true);
-        Configuration.browserCapabilities.setCapability("disable-popup-blocking", true);
-        Configuration.browserCapabilities.setCapability("enablePersistentHover", true);
-        Configuration.browserCapabilities.setCapability("ignoreZoomSetting", true);
-        Configuration.browserCapabilities.setCapability(InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS,true);
-        Configuration.browserCapabilities.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true);
-        Configuration.browser="Internet Explorer";
-        Configuration.reopenBrowserOnFail = true;
-        */
-
-        //WebDriverWait wait = new WebDriverWait(WebDriverRunner.getWebDriver(),10);
         logger.info("Переходим на страницу");
         open("https://www.sberbank-ast.ru/purchaseList.aspx");
         WebDriverRunner.getWebDriver().manage().window().maximize();
-        //SelenideElement loginButton = element(byId("ctl00_ctl00_loginctrl_anchSignOn"));
-        SelenideElement loginButton = element(byXpath("//*[@id=\"ctl00_ctl00_loginctrl_anchSignOn\"]"));
-        loginButton.click();
+        try{
+            SelenideElement loginButton = element(byXpath("//*[@id=\"ctl00_ctl00_loginctrl_anchSignOn\"]"));
+            loginButton.click();
+        }catch (ElementNotFound e) {
+            logger.error(e.getMessage());
+            logger.info("Закрываем страницу");
+            closePage();
+            logger.info("Не удалось перейти на страницу с регистрацией по кнопке, вызываем рекурсию метода для повторной попытки");
+            getLogin();
+        }
 
         element(byId("mainContent_DDL1")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
         element(byId("btnEnter")).click();
@@ -140,7 +130,7 @@ public class HuginService {
             Boolean tenderMatch = auctionModelFromDb.equals(auctionModelFromSite);
 
             if (tenderMatch) {
-                if (checkTenderOptions(tableWithOneRow)) {
+                if (checkTenderOptions(tableWithOneRow,auctionModelFromDb.getAuctionNumber())) {
                     logger.info("Тендер с номером " + auctionModelFromSite.getAuctionNumber() + " подходит для подачи документов");
                     huginDao.setTenderStatusIfSuccess(auctionModelFromSite.getAuctionNumber());
                     logger.info("Меняем статус тендера на значение: подходит для подачи документов");
@@ -299,13 +289,13 @@ public class HuginService {
 
     }
 
-    private boolean checkTenderOptions(SelenideElement selenideElement) {
+    private boolean checkTenderOptions(SelenideElement selenideElement, String tenderNumber) {
         SelenideElement divonerow = selenideElement.find(byClassName("element-in-one-row"));
         ElementsCollection els = divonerow.findAll(byCssSelector("input"));
         els.get(1).click();
         switchTo().window(1);
         WebDriverRunner.getWebDriver().manage().timeouts().pageLoadTimeout(10,TimeUnit.SECONDS);
-        System.out.println(WebDriverRunner.url());
+        //System.out.println(WebDriverRunner.url());
         if(!WebDriverRunner.url().equals("https://www.sberbank-ast.ru/purchaseList.aspx")) {
             logger.info("Переходим к просмотру данных по тендеру");
             SelenideElement el = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[1]/tbody/tr[2]/td[2]")).waitUntil(Condition.visible, 60000);
@@ -314,9 +304,22 @@ public class HuginService {
                 String okpd = element(byCssSelector("span[content='leaf:code']")).text();
                 if (okpd.contains("65")) {
                     logger.info("Тендер прошел проверку ОКПД в части первых двух символов, равных 65");
-                    if (!okpd.contains("65.3.") || !okpd.contains("65.30") || !okpd.contains("65.12.49.000") || !okpd.contains("65.12.50.000")) {
-                        logger.info("Тендер не относится к 65.3. ,65.30, 65.12.49.000 (страхование имущества),65.12.50.000 (страхование общей ответственности), следовательно подходит для подачи документов");
-                        logger.info("Это осаго");
+                    if (!okpd.contains("65.3.") || !okpd.contains("65.30") || !okpd.contains("65.12.49.000") || !okpd.contains("65.12.50.000") || !okpd.contains("65.12.29.000")) {
+                        logger.info("Тендер не относится к 65.3. ,65.30, 65.12.49.000 (страхование имущества),65.12.50.000 (страхование общей ответственности),65.12.29.000 (КАСКО), следовательно подходит для подачи документов");
+                        logger.info("Обновляем url тендера");
+                        huginOracleDao.updateTenderPlaceUrl(WebDriverRunner.url(),tenderNumber);
+                        String govUrlText = null;
+                        String tenderEndPlanDate = null;
+                        String tenderEndPlanTime = null;
+                        try {
+                            govUrlText  = element(byXpath("//*[@id=\"newinfolink\"]/td[2]/a/span")).text();
+                            tenderEndPlanDate = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[14]/tbody/tr[2]/td[2]/span[1]")).text();
+                            tenderEndPlanTime = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[14]/tbody/tr[2]/td[2]/span[2]")).text();
+                        }catch (ElementNotFound e) {
+                            logger.error(e.getMessage());
+                        }
+                        huginOracleDao.updateTenderGovUrl(govUrlText,tenderNumber);
+                        huginOracleDao.updateTenderEndPlanDate(tenderEndPlanDate,tenderEndPlanTime,tenderNumber);
                         return true;
                     } else {
                         logger.info("так же не относится к осаго");

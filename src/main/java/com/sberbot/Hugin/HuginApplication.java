@@ -40,7 +40,7 @@ public class HuginApplication  implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		logger.info("Пробуем залогинится");
-		mailService.sendHelloBotStartingEmail();
+		//mailService.sendHelloBotStartingEmail();
 		Boolean loginSuccesed = huginService.getLogin();
 		for(;;) {
 				if(counter == Integer.parseInt(environment.getProperty("bot.browser.reloadingInterval"))) {

@@ -48,4 +48,23 @@ public class HiginOracleDaoImpl implements HuginOracleDao {
        String query = "SELECT id FROM TENDERA  WHERE TENDER_NUMBER =  ?";
        return jdbcTemplateOracleTend.queryForObject(query,new Object [] {tenderNumber},Long.class);
     }
+
+    @Override
+    public void updateTenderPlaceUrl(String tenderPlaceUrl,String tenderNumber) {
+        String query = "update tend.tendera set tender_place_url = ? where tender_number = ?";
+        jdbcTemplateOracleTend.update(query,tenderPlaceUrl,tenderNumber);
+    }
+
+    @Override
+    public void updateTenderGovUrl(String tenderGovUrl, String tenderNumber) {
+        String query = "update tend.tendera set tender_gov_url = ? where tender_number = ?";
+        jdbcTemplateOracleTend.update(query,tenderGovUrl,tenderNumber);
+    }
+
+    @Override
+    public void updateTenderEndPlanDate(String tenderEndPlanDate, String tenderEndPlanTime, String tenderNumber) {
+        String tenderEndPlanDateTime = tenderEndPlanDate + " " + tenderEndPlanTime;
+        String query = "update tend.tendera set tender_end_date_plan = to_date('"+tenderEndPlanDateTime+"','dd.mm.yyyy hh24:mi') where tender_number = ?";
+        jdbcTemplateOracleTend.update(query,tenderNumber);
+    }
 }
