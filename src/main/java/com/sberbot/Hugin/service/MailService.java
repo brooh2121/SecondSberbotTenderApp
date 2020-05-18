@@ -41,9 +41,15 @@ public class MailService {
 
 
     public void sendEmailNotification (String tenderNumber) {
-        AuctionModel auctionModelFromOracle = huginMailSenderDao.getModelFromOracle(tenderNumber);
-        Long tenderNumberId = oracleDao.getTenderIdByNumber(tenderNumber);
-        String tenderFilingApplicationDate = huginMailSenderDao.getFilingApplicationDate(tenderNumberId);
+        AuctionModel auctionModelFromOracle = null;
+        String tenderFilingApplicationDate = null;
+        try {
+            auctionModelFromOracle = huginMailSenderDao.getModelFromOracle(tenderNumber);
+            Long tenderNumberId = oracleDao.getTenderIdByNumber(tenderNumber);
+            tenderFilingApplicationDate = huginMailSenderDao.getFilingApplicationDate(tenderNumberId);
+        }catch (Exception e) {
+            logger.error(e.getMessage());
+        }
         String defaultError = "Ошибка - Заявка на участие в электронном аукционе возвращена на основании п.2 ч.11 ст. 66 Федерального закона от 05.04.2013 г. № 44-ФЗ: заявка на участие в аукционе уже подана! Для повторной подачи необходимо отозвать ранее поданную заявку. \n";
         String textEmailOrganizationName = "Организатор торгов - наименование организации: " + auctionModelFromOracle.getOrgName() + "\n";
         String servicePlace = "Место оказания услуги: \n";

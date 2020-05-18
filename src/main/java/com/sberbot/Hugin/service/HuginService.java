@@ -90,7 +90,7 @@ public class HuginService {
 
     private boolean getTenderUrlCheck () {
         String url = WebDriverRunner.url();
-        String user = element(byXpath("//*[@id=\"ctl00_ctl00_loginctrl_link\"]")).waitUntil(Condition.visible,1000).text();
+        String user = element(byXpath("//*[@id=\"ctl00_ctl00_loginctrl_link\"]")).waitUntil(Condition.visible,5000).text();
         if(/*url.equals("https://www.sberbank-ast.ru/purchaseList.aspx")&*/user.equals("Мартьянова Надежда Васильевна ИНН: 7709031643 (головная организация)")) {
             logger.info("Мы успешно залогинились и находимся на странице поиска тендеров");
             return true;

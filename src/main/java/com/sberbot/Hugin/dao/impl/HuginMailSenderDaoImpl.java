@@ -1,6 +1,7 @@
 package com.sberbot.Hugin.dao.impl;
 
 import com.sberbot.Hugin.dao.HuginMailSenderDao;
+import com.sberbot.Hugin.dao.mapper.AuctionForEmailMapper;
 import com.sberbot.Hugin.model.AuctionModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,7 +28,7 @@ public class HuginMailSenderDaoImpl implements HuginMailSenderDao {
     @Override
     public AuctionModel getModelFromOracle(String tenderNumber) {
         String query = "select org_name,tender_name,tender_number,tender_sum,tender_place_url,tender_gov_url,publication_date from tend.tendera where tender_number = ?";
-        return jdbcTemplateOracleTend.queryForObject(query,new Object[] {tenderNumber},AuctionModel.class);
+        return (AuctionModel) jdbcTemplateOracleTend.queryForObject(query,new Object[] {tenderNumber},new AuctionForEmailMapper());
     }
 
     @Override
