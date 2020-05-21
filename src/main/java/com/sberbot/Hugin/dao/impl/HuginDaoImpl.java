@@ -103,4 +103,10 @@ public class HuginDaoImpl implements HuginDao {
         return jdbcTemplatePostgreTend.update(query,timestamp);
     }
 
+    @Override
+    public void setTenderStatusOnBotStarting() {
+        String query = "update public.auctions set tender_status = 'опоздали с подачей' where tender_status = 'Подача заявок'";
+        jdbcTemplatePostgreTend.update(query);
+    }
+
 }

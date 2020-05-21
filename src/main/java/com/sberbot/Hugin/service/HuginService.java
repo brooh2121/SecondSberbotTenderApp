@@ -170,10 +170,12 @@ public class HuginService {
         try {
             //скроллим до нажатия кнопки на выбор номера счета
             //executeJavaScript("window.scrollBy(0,400)", "");
-            SelenideElement button = element(byXpath("//table[@id='bxAccount']/tbody/tr/td[2]/input[2]")).waitUntil(Condition.visible,1000);
+            //WebDriverWait wait = new WebDriverWait(WebDriverRunner.getWebDriver(),5000);
+            SelenideElement button = element(byXpath("//table[@id='bxAccount']/tbody/tr/td[2]/input[2]")).waitUntil(Condition.visible,10000);
             button.click();
             switchTo().frame("spravIframe");
-            element(byXpath("//*[@id=\"XMLContainer\"]/table/tbody/tr[2]/td[1]/a/span")).waitUntil(Condition.visible,60000).click();
+            //wait.until(ExpectedConditions.elementToBeClickable(byXpath("//*[@id=\"XMLContainer\"]/table/tbody/tr[2]/td[1]/a/span")));
+            element(byXpath("//*[@id=\"XMLContainer\"]/table/tbody/tr[2]/td[1]/a/span")).waitUntil(Condition.visible,5000).click();
             switchTo().defaultContent();
             String inputSchetNumber = element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_phDocumentZone_nbtPurchaseRequest_bxAccount_account\"]")).getValue();
 
@@ -358,6 +360,8 @@ public class HuginService {
     public void closePage() {
         closeWebDriver();
     }
+
+    public void seTenderStatusOnBotStarting() {huginDao.setTenderStatusOnBotStarting();}
 
     public void setBotStartTimestamp () {
         huginDao.setBotStartTimestamp("Hugin", LocalDateTime.now());

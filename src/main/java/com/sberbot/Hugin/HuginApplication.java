@@ -39,6 +39,8 @@ public class HuginApplication  implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
+		logger.info("Портим статусы тендеров, по которым бот не успел отработать ранее, при первом старте бота");
+		huginService.seTenderStatusOnBotStarting();
 		logger.info("Пробуем залогинится");
 		//mailService.sendHelloBotStartingEmail();
 		Boolean loginSuccesed = huginService.getLogin();

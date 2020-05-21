@@ -18,4 +18,6 @@ public interface HuginDao {
 
     int setBotEndTimestamp(LocalDateTime localDateTime);
 
+    void setTenderStatusOnBotStarting();
+
 }
