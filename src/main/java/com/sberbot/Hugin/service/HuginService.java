@@ -73,7 +73,7 @@ public class HuginService {
             getLogin();
         }
 
-        element(byId("mainContent_DDL1")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
+        element(byXpath("//*[@id=\"mainContent_DDL1\"]")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
         element(byId("btnEnter")).click();
 
         Thread.sleep(500);
