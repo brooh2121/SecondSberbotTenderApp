@@ -52,7 +52,7 @@ public class HuginApplication  implements CommandLineRunner {
 				counter++;
 				logger.info("Запускаем бота " + LocalDateTime.now());
 				LocalDateTime botStartDateTime = LocalDateTime.now();
-				huginService.setBotStartTimestamp();
+				//huginService.setBotStartTimestamp();
 				if(loginSuccesed) {
 					AuctionModel auctionModelFromDb = huginService.getTenderFromDB();
 					if(auctionModelFromDb!=null) {
@@ -78,7 +78,7 @@ public class HuginApplication  implements CommandLineRunner {
 					logger.info("Не удалось зайти под учетной записью с ЭЦП");
 				}
 				logger.info("Бот закончил работу в " + LocalDateTime.now());
-				huginService.setBotEndTimestamp();
+				//huginService.setBotEndTimestamp();
 				//huginService.getTenderUrlCheck();
 
 				Thread.sleep(1000);

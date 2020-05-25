@@ -72,12 +72,14 @@ public class MailService {
     }
 
     private void emailSend(String emailText) {
+        String emailRecepient = environment.getProperty("email.recepients");
         try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage);
             helper.setSubject("Информация о подаче документов по электронному аукциону на площадке Sber");
             helper.setFrom(environment.getProperty("spring.mail.username"));
-            helper.setTo(new String [] {"dimich14@gmail.com","algor@makc.ru","achistov@makc.ru","gagavrilova@makc.ru","past@makc.ru"});
+            helper.setTo(emailRecepient.split(","));
+            //helper.setTo(new String [] {"dimich14@gmail.com","algor@makc.ru","achistov@makc.ru","gagavrilova@makc.ru","past@makc.ru"});
             helper.setText(emailText);
             javaMailSender.send(mimeMessage);
         }catch (Exception e) {

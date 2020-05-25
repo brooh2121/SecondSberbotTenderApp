@@ -113,7 +113,7 @@ public class currentTenderTest {
     @Test
     void elemFromProsmotrOsago() {
         open("https://www.sberbank-ast.ru/purchaseList.aspx");
-        String tenderNumber = "0372200054720000004";
+        String tenderNumber = "0372200153520000014";
         element(byId("searchInput")).setValue(tenderNumber).pressEnter();
         SelenideElement selenideElement = element(byId("resultTable"));
         selenideElement.shouldBe(Condition.visible);
@@ -127,8 +127,9 @@ public class currentTenderTest {
         String okpd = element(byCssSelector("span[content='leaf:code']")).text();
         System.out.println(okpd);
         System.out.println(okpd.toCharArray().length);
+        //System.out.println(!okpd.contains("65.12.49.000"));
         if(okpd.contains("65")) {
-            if (!okpd.contains("65.3.")||!okpd.contains("65.30")) {
+            if (!okpd.contains("65.3.") & !okpd.contains("65.30") & !okpd.contains("65.12.49.000") & !okpd.contains("65.12.50.000") & !okpd.contains("65.12.29.000")) {
                 System.out.println("Это осаго");
             }
         }else {
