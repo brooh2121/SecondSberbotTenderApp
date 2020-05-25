@@ -15,7 +15,10 @@ import org.springframework.core.env.Environment;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.codeborne.selenide.Selectors.*;
 import static com.codeborne.selenide.Selenide.*;
@@ -127,9 +130,12 @@ public class currentTenderTest {
         String okpd = element(byCssSelector("span[content='leaf:code']")).text();
         System.out.println(okpd);
         System.out.println(okpd.toCharArray().length);
+        String okpds = "65.3.,65.30,65.12.49.000,65.12.50.000,65.12.29.000";
+        Set<String> okpdCollection = new HashSet<String>(Arrays.asList(okpds.split(",")));
         //System.out.println(!okpd.contains("65.12.49.000"));
         if(okpd.contains("65")) {
-            if (!okpd.contains("65.3.") & !okpd.contains("65.30") & !okpd.contains("65.12.49.000") & !okpd.contains("65.12.50.000") & !okpd.contains("65.12.29.000")) {
+            if (!okpdCollection.contains(okpd)) {
+            //if (!okpd.contains("65.3.") & !okpd.contains("65.30") & !okpd.contains("65.12.49.000") & !okpd.contains("65.12.50.000") & !okpd.contains("65.12.29.000")) {
                 System.out.println("Это осаго");
             }
         }else {

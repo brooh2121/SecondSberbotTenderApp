@@ -24,7 +24,10 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.nio.channels.SeekableByteChannel;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -306,7 +309,10 @@ public class HuginService {
                 String okpd = element(byCssSelector("span[content='leaf:code']")).text();
                 if (okpd.contains("65")) {
                     logger.info("Тендер прошел проверку ОКПД в части первых двух символов, равных 65");
-                    if (!okpd.contains("65.3.") & !okpd.contains("65.30") & !okpd.contains("65.12.49.000") & !okpd.contains("65.12.50.000") & !okpd.contains("65.12.29.000")) {
+                    String okpds = environment.getProperty("okpd.exceptions");
+                    Set<String> okpdCollection = new HashSet<String>(Arrays.asList(okpds.split(",")));
+                    if (!okpdCollection.contains(okpd)) {
+                    //if (!okpd.contains("65.3.") & !okpd.contains("65.30") & !okpd.contains("65.12.49.000") & !okpd.contains("65.12.50.000") & !okpd.contains("65.12.29.000")) {
                         logger.info("Тендер не относится к 65.3. ,65.30, 65.12.49.000 (страхование имущества),65.12.50.000 (страхование общей ответственности),65.12.29.000 (КАСКО), следовательно подходит для подачи документов");
                         logger.info("Обновляем url тендера");
                         huginOracleDao.updateTenderPlaceUrl(WebDriverRunner.url(),tenderNumber);
