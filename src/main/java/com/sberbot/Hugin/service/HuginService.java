@@ -76,10 +76,13 @@ public class HuginService {
             getLogin();
         }
 
-        element(byXpath("//*[@id=\"mainContent_DDL1\"]")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
-        element(byId("btnEnter")).click();
+        String url = WebDriverRunner.url();
 
-        Thread.sleep(500);
+        if(!url.equals("https://www.sberbank-ast.ru/purchaseList.aspx")) {
+            element(byXpath("//*[@id=\"mainContent_DDL1\"]")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
+            element(byId("btnEnter")).click();
+            Thread.sleep(500);
+        }
         //minimalizeTenderTable();
 
         if (getTenderUrlCheck()) {
