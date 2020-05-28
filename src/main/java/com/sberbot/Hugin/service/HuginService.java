@@ -324,13 +324,16 @@ public class HuginService {
                         String tenderEndPlanTime = null;
                         try {
                             govUrlText  = element(byXpath("//*[@id=\"newinfolink\"]/td[2]/a/span")).text();
-                            tenderEndPlanDate = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[14]/tbody/tr[2]/td[2]/span[1]")).text();
-                            tenderEndPlanTime = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[14]/tbody/tr[2]/td[2]/span[2]")).text();
+                            tenderEndPlanDate = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[14]/tbody/tr[2]/td[2]/span[1]")).waitUntil(Condition.visible,5000).text();
+                            tenderEndPlanTime = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[14]/tbody/tr[2]/td[2]/span[2]")).waitUntil(Condition.visible,5000).text();
                         }catch (ElementNotFound e) {
                             logger.error(e.getMessage());
                         }
+
                         huginOracleDao.updateTenderGovUrl(govUrlText,tenderNumber);
-                        huginOracleDao.updateTenderEndPlanDate(tenderEndPlanDate,tenderEndPlanTime,tenderNumber);
+                        if (StringUtils.hasText(tenderEndPlanDate) & StringUtils.hasText(tenderEndPlanTime)) {
+                            huginOracleDao.updateTenderEndPlanDate(tenderEndPlanDate,tenderEndPlanTime,tenderNumber);
+                        }
                         return true;
                     } else {
                         logger.info("так же не относится к осаго");
