@@ -48,8 +48,10 @@ public class HuginService {
     @Autowired
     Environment environment;
 
-    public boolean getLogin() throws InterruptedException{
+    //
 
+    public boolean getLogin() throws InterruptedException{
+        String criptoHashValue = environment.getProperty("cryptoPro.hash.value");
         File driverFile = new File (environment.getProperty("webdriver.chrome.path"));
         System.setProperty("webdriver.chrome.driver",driverFile.getAbsolutePath());
         ChromeOptions options = new ChromeOptions();
@@ -79,7 +81,7 @@ public class HuginService {
         String url = WebDriverRunner.url();
 
         if(!url.equals("https://www.sberbank-ast.ru/purchaseList.aspx")) {
-            element(byXpath("//*[@id=\"mainContent_DDL1\"]")).waitUntil(Condition.visible,4000).selectOptionByValue("5EB4A43B643B922465BF95108F01BBA8F6C7C6E7");
+            element(byXpath("//*[@id=\"mainContent_DDL1\"]")).waitUntil(Condition.visible,4000).selectOptionByValue(criptoHashValue);
             element(byId("btnEnter")).click();
             Thread.sleep(500);
         }
@@ -261,7 +263,7 @@ public class HuginService {
                             & StringUtils.hasText(declarationConsent)
                             & StringUtils.hasText(form2part)) {
                 element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).click();
-                element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).waitUntil(Condition.not(Condition.visible), 60000);
+                element(byXpath("//*[@id=\"ctl00_ctl00_phWorkZone_SignPanel_btnSignAllFilesAndDocument\"]")).waitUntil(Condition.not(Condition.visible), 10000);
 
                 String errorMessage;
                 try {
@@ -302,11 +304,11 @@ public class HuginService {
         ElementsCollection els = divonerow.findAll(byCssSelector("input"));
         els.get(1).click();
         switchTo().window(1);
-        WebDriverRunner.getWebDriver().manage().timeouts().pageLoadTimeout(10,TimeUnit.SECONDS);
+        WebDriverRunner.getWebDriver().manage().timeouts().pageLoadTimeout(1,TimeUnit.SECONDS);
         //System.out.println(WebDriverRunner.url());
         if(!WebDriverRunner.url().equals("https://www.sberbank-ast.ru/purchaseList.aspx")) {
             logger.info("Переходим к просмотру данных по тендеру");
-            SelenideElement el = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[1]/tbody/tr[2]/td[2]")).waitUntil(Condition.visible, 60000);
+            SelenideElement el = element(byXpath("//*[@id=\"XMLContainer\"]/div[1]/table[1]/tbody/tr[2]/td[2]")).waitUntil(Condition.visible, 10000);
             if (String.valueOf(el).contains("44-ФЗ")) {
                 logger.info("Тендер прошел проверку по значению поля равному 44-ФЗ, переходим к проверке ОКПД");
                 String okpd = element(byCssSelector("span[content='leaf:code']")).text();
